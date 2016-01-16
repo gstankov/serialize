@@ -191,7 +191,7 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 
 			}
 
-		} else { // It's blank file
+		} else { // It's blank file (featue not added yet)
 
 			$processed = true;
 
