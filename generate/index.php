@@ -25,7 +25,8 @@ $checkboxes = [
 	"center" => null, 
 	"centerx" => null, 
 	"centery" => null, 
-	"bold" => null
+	"bold" => null,
+	"blankfile" => null
 ];
 
 foreach ($checkboxes as $key => $value) {
@@ -49,7 +50,7 @@ $inputs = [
 	"x" => null, 
 	"y" => null, 
 	"prefix" => null, 
-	"fontsize" => null, 
+	"fontsize" => null
 ];
 
 foreach ($inputs as $key => $value) {
@@ -64,8 +65,12 @@ foreach ($inputs as $key => $value) {
 if (sizeof($error) == 0)  {
 
 	// File must be set
-	if ($_FILES['file']['name'] == "") {
-		$error[] = "File was not selected.";
+	if (!isset($_FILES)) {
+
+		if (!$checkboxes['blankfile']) {
+			$error[] = "File was not selected.";
+		}
+
 	}
 
 	// Width and height
@@ -144,365 +149,209 @@ if (sizeof($error) != 0) {
 
 if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 
-	if ($_FILES['file']['name'] != "") { // If file specified 
+	if (isset($_FILES['file']) || isset($checkboxes['blankfile'])) { // If file specified 
 
-		// Dependencies
+		// Upload flag
+		$processed = false;
 
-		// Upload class
-		require_once('class/upload/class.upload.php');
+		if (isset($_FILES['file'])) {
 
-		// Upload
-		$file = new Upload($_FILES['file']);
+			// Dependencies
 
-		if ($file->uploaded) { // If uploaded
+			// Upload class
+			require_once('class/upload/class.upload.php');
 
-			// Allow only PDF's
-			$file->allowed = array('application/pdf');
-			$file->mime_check = true;
-			$file->file_safe_name = true;
-			$file->file_new_name_body = 'template';
+			// Upload
+			$file = new Upload($_FILES['file']);
 
-			// Process
-			$file->Process('data/');
+			if ($file->uploaded) { // If uploaded
 
-			if ($file->processed) { // No processing error
+				// Allow only PDF's
+				$file->allowed = array('application/pdf');
+				$file->mime_check = true;
+				$file->file_safe_name = true;
+				$file->file_new_name_body = 'template';
 
-				// PDF classes
-				require_once('class/tfpdf/tfpdf.php');
-				require_once('class/FPDI-1.4.2/fpdi.php');
-				require_once('class/FPDI-1.4.2/FPDI_Protection.php');
+				// Process
+				$file->Process('data/');
 
-				// Radios
-				$fileorpages 	= $radios['fileorpages'];
-				$copiesorrange 	= $radios['copiesorrange'];
-				$origin 		= $radios['origin'];
+				if ($file->processed) { // No processing error
 
-				// Checkboxes
-				$border 	= $checkboxes['border'];
-				$center 	= $checkboxes['center'];
-				$centerx 	= $checkboxes['centerx'];
-				$centery 	= $checkboxes['centery'];
-				$bold 		= $checkboxes['bold'];
+					$processed = true;
 
-				// Inputs	
-				$width 		= $inputs['width'];
-				$height 	= $inputs['height'];
-				$margins 	= $inputs['margins'];
-				$nestwidth 	= $inputs['nestwidth'];
-				$copies 	= $inputs['copies'];
-				$maxcopies 	= $inputs['maxcopies'];
-				$from 		= $inputs['from'];
-				$to 		= $inputs['to'];
-				$x 			= $inputs['x'];
-				$y 			= $inputs['y'];
-				$prefix 	= $inputs['prefix'];
-				$fontsize 	= $inputs['fontsize'];
+				} else { // If problem processing
 
-				// Copies or range
-				if($copiesorrange == "range") {
-					$copies = sizeof(range($from, $to));
+					echo "Error: " . $file->error; exit();
+
 				}
 
-				// OUTPUT NEST
-				if ($fileorpages == "file") {
+			} else { // If problem uploading
 
-					$leftMargin = 0;
+				echo "Error: Problem while uploading."; exit();
 
-					// Set page width and height an calculate items per row
-					$pWidth = $nestwidth;
+			}
 
-					// If copies fit in width
-					if (($copies * ($width + $margins)) < $pWidth) {
+		} else { // It's blank file
 
-						$perRow  = $copies;
-						$pHeight = $height + $margins;
+			$processed = true;
 
-					} else {
+		}
 
-						$perRow  = floor($pWidth / ($width + $margins));
-						$pHeight = ceil($copies / $perRow) * ($height + $margins);
+		if ($processed) {
 
-					}
+			// PDF classes
+			require_once('class/tfpdf/tfpdf.php');
+			require_once('class/FPDI-1.4.2/fpdi.php');
+			require_once('class/FPDI-1.4.2/FPDI_Protection.php');
 
-					// Add last margin
-					$pHeight = $pHeight + $margins;
-					$pWidth  = $pWidth + $margins;
+			// Radios
+			$fileorpages 	= $radios['fileorpages'];
+			$copiesorrange 	= $radios['copiesorrange'];
+			$origin 		= $radios['origin'];
 
-					// Center print
-					if ($center) {
-						$leftMargin = ($pWidth - (($perRow * ($width + $margins)) + $margins)) / 2;
-					}
+			// Checkboxes
+			$border 	= $checkboxes['border'];
+			$center 	= $checkboxes['center'];
+			$centerx 	= $checkboxes['centerx'];
+			$centery 	= $checkboxes['centery'];
+			$bold 		= $checkboxes['bold'];
 
-					// Write to document
-					class PDF extends FPDI_Protection {
+			// Inputs	
+			$width 		= $inputs['width'];
+			$height 	= $inputs['height'];
+			$margins 	= $inputs['margins'];
+			$nestwidth 	= $inputs['nestwidth'];
+			$copies 	= $inputs['copies'];
+			$maxcopies 	= $inputs['maxcopies'];
+			$from 		= $inputs['from'];
+			$to 		= $inputs['to'];
+			$x 			= $inputs['x'];
+			$y 			= $inputs['y'];
+			$prefix 	= $inputs['prefix'];
+			$fontsize 	= $inputs['fontsize'];
 
-						// Set data
-						function setData($width, $height, $margins, $copies, $pWidth, $pHeight, $perRow, $leftMargin, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold) {
+			// Copies or range
+			if($copiesorrange == "range") {
+				$copies = sizeof(range($from, $to));
+			}
 
-							$this->width   		 = $width;
-							$this->height  		 = $height;
-							$this->margins 		 = $margins;
-							$this->copies  		 = $copies;
-							$this->pWidth  		 = $pWidth;
-							$this->pHeight 		 = $pHeight;
-							$this->perRow  		 = $perRow;
-							$this->leftMargin    = $leftMargin;
-							$this->border   	 = $border;
-							$this->nx   		 = $x;
-							$this->ny   		 = $y;
-							$this->prefix		 = $prefix;
-							$this->origin		 = $origin;
-							$this->fontsize		 = $fontsize;
-							$this->copiesorrange = $copiesorrange;
-							$this->from 		 = $from;
-							$this->centerx 		 = $centerx;
-							$this->centery 		 = $centery;
-							$this->maxcopies	 = $maxcopies;
-							$this->bold 		 = $bold;
+			// OUTPUT NEST
+			if ($fileorpages == "file") {
 
-						}
+				$leftMargin = 0;
 
-						// Serialize function
-						function Serialize() {
+				// Set page width and height an calculate items per row
+				$pWidth = $nestwidth;
 
-							// Bold?
-							if ($this->bold) {
-								// Add bold font
-								$this->AddFont('Arial', 'B', 'arialbd.ttf', true);
-							} else {
-								// Add normal font
-								$this->AddFont('Arial', '', 'arial.ttf', true);
-							}
+				// If copies fit in width
+				if (($copies * ($width + $margins)) < $pWidth) {
 
-							// Font size in points
-							$pointFontSize = $this->fontsize * 2.83464567;
+					$perRow  = $copies;
+					$pHeight = $height + $margins;
 
-							// Bold?
-							if ($this->bold) {
-								// Set bold font
-								$this->SetFont('Arial', 'B', $pointFontSize);
-							} else {
-								// Set normal font
-								$this->SetFont('Arial', '', $pointFontSize);
-							}
+				} else {
 
-							// Start position
-							$x = $this->leftMargin + $this->margins;
-							$y = $this->margins;
+					$perRow  = floor($pWidth / ($width + $margins));
+					$pHeight = ceil($copies / $perRow) * ($height + $margins);
 
-							// For each copy
-							for ($i=1; $i <= $this->copies; $i++) {
+				}
 
-								// Format number
-								if ($this->copiesorrange == "range") {
+				// Add last margin
+				$pHeight = $pHeight + $margins;
+				$pWidth  = $pWidth + $margins;
 
-									$formatted = str_pad(
-										$this->from + $i-1, strlen(
-												(string) $this->maxcopies
-										), '0', STR_PAD_LEFT
-									);
+				// Center print
+				if ($center) {
+					$leftMargin = ($pWidth - (($perRow * ($width + $margins)) + $margins)) / 2;
+				}
 
-								} else {
-
-									$formatted = str_pad(
-										$i-1, strlen(
-											(string) $this->copies
-										), '0', STR_PAD_LEFT
-									);
-
-								}
-
-								// Set serial no
-								$serial = $formatted;
-
-								// Add prefix if set
-								if ($this->prefix != "") $serial = $this->prefix . " " . $formatted;
-
-								// Cell width (+ 2mm)
-								$cellWidth = $this->GetStringWidth($serial) + 2;
-
-								// Set number position
-								$cx = 0;
-								$cy = 0;
-
-								switch ($this->origin) {
-
-									// Top left
-									case "TL":
-
-										$cx = $x + $this->nx;
-										$cy = $y + $this->ny;
-
-									break;
-
-									// Top right
-									case "TR":
-
-										$cx = $x + (($this->width - ($cellWidth)) - $this->nx);
-										$cy = $y + $this->ny;
-										
-									break;
-
-									// Bottom right
-									case "BR":
-
-										$cx = $x + (($this->width - ($cellWidth)) - $this->nx);
-										$cy = $y + (($this->height - ($this->fontsize + 1)) - $this->ny);
-
-									break;
-
-									// Bottom left
-									case "BL":
-
-										$cx = $x + $this->nx;
-										$cy = $y + (($this->height - ($this->fontsize + 1)) - $this->ny);
-
-									break;
-
-								}
-
-								// Center X
-								if ($this->centerx) {
-									$cx = $x + (($this->width / 2) - ($cellWidth / 2));
-								}
-
-								// Center Y
-								if ($this->centery) {
-									$cy = $y - ((($this->height / 2) + (($this->fontsize + 1) / 2)) + $this->margins);
-								}
-
-								// If both (?)
-								if ($this->centerx && $this->centery) {
-									$cx = $x + (($this->width / 2) - ($cellWidth / 2));
-									$cy = $y - ((($this->height / 2) + (($this->fontsize + 1) / 2)) + $this->margins);
-								}
-
-								// Set computed position
-								$this->setXY($cx, $cy);
-
-								// Draw rect
-								if ($this->border) $this->Rect($x, $y, $this->width, $this->height);
-
-								// Create number cell
-								$this->Cell($cellWidth, ($this->fontsize + 1), $serial, 1, 1, "C");
-
-								// Increment X by width
-								$x = $x + ($this->width + $this->margins);
-
-								// If diviseable
-								if ($i % $this->perRow == 0) {
-									$i != $this->copies ? $y = $y + ($this->height + $this->margins) : $y = $y + $this->height; // Increment Y by height
-									$x = $this->leftMargin + $this->margins;	// Reset X
-								}
-
-							}
-							
-						}
-
-						// No page breaking
-						function AcceptPageBreak() {
-							return false;
-						}
-
-					} // End of class
-
-					// Portrait or landscape
-					$pWidth > $pHeight ? $pl = "L" : $pl = "P";
-
-					// PDF constructor
-					$pdf = new PDF($pl, 'mm', array($pWidth, $pHeight));
-
-					// Add a page
-					$pdf->AddPage();
-
-					// Set uploaded file
-					$pdf->setSourceFile($file->file_dst_path . $file->file_dst_name);
-
-					// Import 1st page
-					$template = $pdf->importPage(1);
+				// Write to document
+				class PDF extends FPDI_Protection {
 
 					// Set data
-					$pdf->setData($width, $height, $margins, $copies, $pWidth, $pHeight, $perRow, $leftMargin, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold);
+					function setData($width, $height, $margins, $copies, $pWidth, $pHeight, $perRow, $leftMargin, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold) {
 
-					// Place template
-					$x = $leftMargin + $margins;
-					$y = $margins;
-
-					for ($i=1; $i <= $copies; $i++) {
-
-						// Draw template
-						$pdf->useTemplate($template, $x, $y, $width, $height);
-
-						$x = $x + ($width + $margins);
-
-						if ($i % $perRow == 0) {
-							$i != $copies ? $y = $y + ($height + $margins) : $y = $y + $height; // Increment Y by height
-							$x = $leftMargin + $margins;
-						}
+						$this->width   		 = $width;
+						$this->height  		 = $height;
+						$this->margins 		 = $margins;
+						$this->copies  		 = $copies;
+						$this->pWidth  		 = $pWidth;
+						$this->pHeight 		 = $pHeight;
+						$this->perRow  		 = $perRow;
+						$this->leftMargin    = $leftMargin;
+						$this->border   	 = $border;
+						$this->nx   		 = $x;
+						$this->ny   		 = $y;
+						$this->prefix		 = $prefix;
+						$this->origin		 = $origin;
+						$this->fontsize		 = $fontsize;
+						$this->copiesorrange = $copiesorrange;
+						$this->from 		 = $from;
+						$this->centerx 		 = $centerx;
+						$this->centery 		 = $centery;
+						$this->maxcopies	 = $maxcopies;
+						$this->bold 		 = $bold;
 
 					}
 
-					// Do serialization
-					$pdf->Serialize();
+					// Serialize function
+					function Serialize() {
 
-					// Output file inline
-					$pdf->Output("Serialized.pdf", 'I');
-					
-				}
-
-				// OUTPUT PAGES
-				if ($fileorpages == "pages") {
-
-					// Set page width
-					$pWidth  = $width + ($margins * 2);
-					$pHeight = $height + ($margins * 2);
-
-					// Write to document
-					class PDF extends FPDI_Protection {
-
-						// Set data
-						function setData($width, $height, $margins, $copies, $pWidth, $pHeight, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold, $serial) {
-
-							$this->width   		 = $width;
-							$this->height  		 = $height;
-							$this->margins 		 = $margins;
-							$this->copies  		 = $copies;
-							$this->pWidth  		 = $pWidth;
-							$this->pHeight 		 = $pHeight;
-							$this->border   	 = $border;
-							$this->nx   		 = $x;
-							$this->ny   		 = $y;
-							$this->prefix		 = $prefix;
-							$this->origin		 = $origin;
-							$this->fontsize		 = $fontsize;
-							$this->copiesorrange = $copiesorrange;
-							$this->from 		 = $from;
-							$this->centerx 		 = $centerx;
-							$this->centery 		 = $centery;
-							$this->maxcopies	 = $maxcopies;
-							$this->bold 		 = $bold;
-							$this->serial 		 = $serial;
-
+						// Bold?
+						if ($this->bold) {
+							// Add bold font
+							$this->AddFont('Arial', 'B', 'arialbd.ttf', true);
+						} else {
+							// Add normal font
+							$this->AddFont('Arial', '', 'arial.ttf', true);
 						}
 
-						// Serialize function
-						function Serialize() {
+						// Font size in points
+						$pointFontSize = $this->fontsize * 2.83464567;
 
-							// Bold?
-							if ($this->bold) {
-								// Add bold font
-								$this->AddFont('Arial', 'B', 'arialbd.ttf', true);
+						// Bold?
+						if ($this->bold) {
+							// Set bold font
+							$this->SetFont('Arial', 'B', $pointFontSize);
+						} else {
+							// Set normal font
+							$this->SetFont('Arial', '', $pointFontSize);
+						}
+
+						// Start position
+						$x = $this->leftMargin + $this->margins;
+						$y = $this->margins;
+
+						// For each copy
+						for ($i=1; $i <= $this->copies; $i++) {
+
+							// Format number
+							if ($this->copiesorrange == "range") {
+
+								$formatted = str_pad(
+									$this->from + $i-1, strlen(
+											(string) $this->maxcopies
+									), '0', STR_PAD_LEFT
+								);
+
 							} else {
-								// Add normal font
-								$this->AddFont('Arial', '', 'arial.ttf', true);
+
+								$formatted = str_pad(
+									$i-1, strlen(
+										(string) $this->copies
+									), '0', STR_PAD_LEFT
+								);
+
 							}
 
-							// Start position
-							$x = $this->margins;
-							$y = $this->margins;
+							// Set serial no
+							$serial = $formatted;
+
+							// Add prefix if set
+							if ($this->prefix != "") $serial = $this->prefix . " " . $formatted;
 
 							// Cell width (+ 2mm)
-							$cellWidth = $this->GetStringWidth($this->serial) + 2;
+							$cellWidth = $this->GetStringWidth($serial) + 2;
 
 							// Set number position
 							$cx = 0;
@@ -551,13 +400,13 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 
 							// Center Y
 							if ($this->centery) {
-								$cy = $y - ((($this->height / 2) + (($this->fontsize + 1) / 2)) + ($this->margins * 2));
+								$cy = $y + ((($this->height / 2) - (($this->fontsize + 1) / 2)));
 							}
 
 							// If both (?)
 							if ($this->centerx && $this->centery) {
 								$cx = $x + (($this->width / 2) - ($cellWidth / 2));
-								$cy = $y - ((($this->height / 2) + (($this->fontsize + 1) / 2)) + ($this->margins * 2));
+								$cy = $y + ((($this->height / 2) - (($this->fontsize + 1) / 2)));
 							}
 
 							// Set computed position
@@ -567,87 +416,280 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 							if ($this->border) $this->Rect($x, $y, $this->width, $this->height);
 
 							// Create number cell
-							$this->Cell($cellWidth, ($this->fontsize + 1), $this->serial, 1, 1, "C");
-							
+							$this->Cell($cellWidth, ($this->fontsize + 1), $serial, 1, 1, "C");
+
+							// Increment X by width
+							$x = $x + ($this->width + $this->margins);
+
+							// If diviseable
+							if ($i % $this->perRow == 0) {
+								$i != $this->copies ? $y = $y + ($this->height + $this->margins) : $y = $y + $this->height; // Increment Y by height
+								$x = $this->leftMargin + $this->margins;	// Reset X
+							}
+
 						}
+						
+					}
 
-						// No page breaking
-						function AcceptPageBreak() {
-							return false;
-						}
+					// No page breaking
+					function AcceptPageBreak() {
+						return false;
+					}
 
-					} // End of class
+				} // End of class
 
-					// Portrait or landscape
-					$pWidth > $pHeight ? $pl = "L" : $pl = "P";
+				// Portrait or landscape
+				$pWidth > $pHeight ? $pl = "L" : $pl = "P";
 
-					// PDF constructor
-					$pdf = new PDF($pl, 'mm', array($pWidth, $pHeight));
+				// PDF constructor
+				$pdf = new PDF($pl, 'mm', array($pWidth, $pHeight));
+
+				// Add a page
+				$pdf->AddPage();
+
+				if (isset($_FILES['file'])) {
 
 					// Set uploaded file
 					$pdf->setSourceFile($file->file_dst_path . $file->file_dst_name);
 
-					// Import 1st page
-					$template = $pdf->importPage(1);
+				} else {
 
-					for ($i=1; $i <= $copies; $i++) {
-
-						// Font size in points
-						$pointFontSize = $fontsize * 2.83464567;
-
-						// Bold?
-						if ($bold) {
-							// Set bold font
-							$pdf->SetFont('Arial', 'B', $pointFontSize);
-						} else {
-							// Set normal font
-							$pdf->SetFont('Arial', '', $pointFontSize);
-						}
-
-						// Format number
-						if ($copiesorrange == "range") {
-							$formatted = str_pad($from + $i-1, strlen((string) $maxcopies), '0', STR_PAD_LEFT);
-						} else {
-							$formatted = str_pad($i-1, strlen((string) $copies), '0', STR_PAD_LEFT);
-						}
-
-						// Set serial no
-						$serial = $formatted;
-
-						// Add prefix if set
-						if ($prefix != "") $serial = $prefix . " " . $formatted;
-
-						// Set data
-						$pdf->setData($width, $height, $margins, $copies, $pWidth, $pHeight, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold, $serial);
-
-						// Add a page
-						$pdf->AddPage();
-
-						// Draw template
-						$pdf->useTemplate($template, $margins, $margins, $width, $height);
-
-						// Do serialization
-						$pdf->Serialize($serial);
-
-					}
-
-					// Output file inline
-					$pdf->Output("Serialized.pdf", 'I');
+					// Set uploaded file
+					$pdf->setSourceFile("data/Blank.pdf");
 
 				}
 
-				// Delete uploaded file
-				unlink($file->file_dst_path . $file->file_dst_name);
+				// Import 1st page
+				$template = $pdf->importPage(1);
 
-			} else { // If problem processing
+				// Set data
+				$pdf->setData($width, $height, $margins, $copies, $pWidth, $pHeight, $perRow, $leftMargin, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold);
 
-				echo "Error: " . $file->error; exit();
+				// Place template
+				$x = $leftMargin + $margins;
+				$y = $margins;
+
+				for ($i=1; $i <= $copies; $i++) {
+
+					// Draw template
+					$pdf->useTemplate($template, $x, $y, $width, $height);
+
+					$x = $x + ($width + $margins);
+
+					if ($i % $perRow == 0) {
+						$i != $copies ? $y = $y + ($height + $margins) : $y = $y + $height; // Increment Y by height
+						$x = $leftMargin + $margins;
+					}
+
+				}
+
+				// Do serialization
+				$pdf->Serialize();
+
+				// Output file inline
+				$pdf->Output("Serialized.pdf", 'I');
+				
+			}
+
+			// OUTPUT PAGES
+			if ($fileorpages == "pages") {
+
+				// Set page width
+				$pWidth  = $width + ($margins * 2);
+				$pHeight = $height + ($margins * 2);
+
+				// Write to document
+				class PDF extends FPDI_Protection {
+
+					// Set data
+					function setData($width, $height, $margins, $copies, $pWidth, $pHeight, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold, $serial) {
+
+						$this->width   		 = $width;
+						$this->height  		 = $height;
+						$this->margins 		 = $margins;
+						$this->copies  		 = $copies;
+						$this->pWidth  		 = $pWidth;
+						$this->pHeight 		 = $pHeight;
+						$this->border   	 = $border;
+						$this->nx   		 = $x;
+						$this->ny   		 = $y;
+						$this->prefix		 = $prefix;
+						$this->origin		 = $origin;
+						$this->fontsize		 = $fontsize;
+						$this->copiesorrange = $copiesorrange;
+						$this->from 		 = $from;
+						$this->centerx 		 = $centerx;
+						$this->centery 		 = $centery;
+						$this->maxcopies	 = $maxcopies;
+						$this->bold 		 = $bold;
+						$this->serial 		 = $serial;
+
+					}
+
+					// Serialize function
+					function Serialize() {
+
+						// Bold?
+						if ($this->bold) {
+							// Add bold font
+							$this->AddFont('Arial', 'B', 'arialbd.ttf', true);
+						} else {
+							// Add normal font
+							$this->AddFont('Arial', '', 'arial.ttf', true);
+						}
+
+						// Start position
+						$x = $this->margins;
+						$y = $this->margins;
+
+						// Cell width (+ 2mm)
+						$cellWidth = $this->GetStringWidth($this->serial) + 2;
+
+						// Set number position
+						$cx = 0;
+						$cy = 0;
+
+						switch ($this->origin) {
+
+							// Top left
+							case "TL":
+
+								$cx = $x + $this->nx;
+								$cy = $y + $this->ny;
+
+							break;
+
+							// Top right
+							case "TR":
+
+								$cx = $x + (($this->width - ($cellWidth)) - $this->nx);
+								$cy = $y + $this->ny;
+								
+							break;
+
+							// Bottom right
+							case "BR":
+
+								$cx = $x + (($this->width - ($cellWidth)) - $this->nx);
+								$cy = $y + (($this->height - ($this->fontsize + 1)) - $this->ny);
+
+							break;
+
+							// Bottom left
+							case "BL":
+
+								$cx = $x + $this->nx;
+								$cy = $y + (($this->height - ($this->fontsize + 1)) - $this->ny);
+
+							break;
+
+						}
+
+						// Center X
+						if ($this->centerx) {
+							$cx = $x + (($this->width / 2) - ($cellWidth / 2));
+						}
+
+						// Center Y
+						if ($this->centery) {
+							$cy = $y + ((($this->height / 2) - (($this->fontsize + 1) / 2)));
+						}
+
+						// If both (?)
+						if ($this->centerx && $this->centery) {
+							$cx = $x + (($this->width / 2) - ($cellWidth / 2));
+							$cy = $y + ((($this->height / 2) - (($this->fontsize + 1) / 2)));
+						}
+
+						// Set computed position
+						$this->setXY($cx, $cy);
+
+						// Draw rect
+						if ($this->border) $this->Rect($x, $y, $this->width, $this->height);
+
+						// Create number cell
+						$this->Cell($cellWidth, ($this->fontsize + 1), $this->serial, 1, 1, "C");
+						
+					}
+
+					// No page breaking
+					function AcceptPageBreak() {
+						return false;
+					}
+
+				} // End of class
+
+				// Portrait or landscape
+				$pWidth > $pHeight ? $pl = "L" : $pl = "P";
+
+				// PDF constructor
+				$pdf = new PDF($pl, 'mm', array($pWidth, $pHeight));
+
+				if (isset($_FILES['file'])) {
+
+					// Set uploaded file
+					$pdf->setSourceFile($file->file_dst_path . $file->file_dst_name);
+
+				} else {
+
+					// Set uploaded file
+					$pdf->setSourceFile("data/Blank.pdf");
+
+				}
+
+				// Import 1st page
+				$template = $pdf->importPage(1);
+
+				for ($i=1; $i <= $copies; $i++) {
+
+					// Font size in points
+					$pointFontSize = $fontsize * 2.83464567;
+
+					// Bold?
+					if ($bold) {
+						// Set bold font
+						$pdf->SetFont('Arial', 'B', $pointFontSize);
+					} else {
+						// Set normal font
+						$pdf->SetFont('Arial', '', $pointFontSize);
+					}
+
+					// Format number
+					if ($copiesorrange == "range") {
+						$formatted = str_pad($from + $i-1, strlen((string) $maxcopies), '0', STR_PAD_LEFT);
+					} else {
+						$formatted = str_pad($i-1, strlen((string) $copies), '0', STR_PAD_LEFT);
+					}
+
+					// Set serial no
+					$serial = $formatted;
+
+					// Add prefix if set
+					if ($prefix != "") $serial = $prefix . " " . $formatted;
+
+					// Set data
+					$pdf->setData($width, $height, $margins, $copies, $pWidth, $pHeight, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold, $serial);
+
+					// Add a page
+					$pdf->AddPage();
+
+					// Draw template
+					$pdf->useTemplate($template, $margins, $margins, $width, $height);
+
+					// Do serialization
+					$pdf->Serialize($serial);
+
+				}
+
+				// Output file inline
+				$pdf->Output("Serialized.pdf", 'I');
 
 			}
 
-		} else { // If problem uploading
-
-			echo "Error: Problem while uploading."; exit();
+			// Delete uploaded file
+			if (isset($_FILES['file'])) {
+				unlink($file->file_dst_path . $file->file_dst_name);
+			}
 
 		}
 
