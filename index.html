@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"> 
+	<title>Serialize your print file</title>
+	<script type="text/javascript" src="vendor/angular.min.js"></script>
+	<script type="text/javascript" src="vendor/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="vendor/foundation-5.3.0/js/foundation.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="vendor/foundation-5.3.0/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" href="vendor/foundation-5.3.0/css/foundation.min.css" />
+	<link rel="stylesheet" type="text/css" href="vendor/foundation-5.3.0/foundation-icons/foundation-icons.css" />
+	<link rel="stylesheet" type="text/css" href="css/main.css" />
+	<link rel="shortcut icon" href="images/favicon.png" type="image/x-icon" />
+</head>
+
+<body ng-app="app">
+
+	<div id="wrapper" ng-controller="SerializeController">
+
+		<form novalidate name="serialize" action="generate/" target="_blank" method="post" enctype="multipart/form-data" valid>
+
+			<div class="row">
+				<div class="small-12 columns centered">
+					<div class="header"><img src="images/mark_small.png" />Serialize your print file</div>
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row">
+
+				<div class="small-6 columns">
+
+					<fieldset>
+
+		    			<legend><i class="fi-lg fi-page-add"></i> Print file selection</legend>
+
+						<h6 class="subheader">Select a file you want to serialize</h6>
+						<input type="file" name="file" accept="application/pdf" onchange="angular.element(this).scope().fileNameChanged(this)" required />
+
+					</fieldset>
+
+				</div>
+
+				<div class="small-6 columns">
+
+					<fieldset style="height: 156px">
+
+		    			<legend><i class="fi-lg fi-page-export"></i> Output options</legend>
+
+						<h6 class="subheader">Output single file or multiple pages?</h6>
+
+						Nest to single file: <input type="radio" name="fileorpages" value="file" ng-model="data.fileorpages" /> 
+						Multiple pages: <input type="radio" name="fileorpages" value="pages" ng-model="data.fileorpages" />
+
+					</fieldset>
+
+				</div>
+
+			</div>
+
+			<div class="row">
+
+				<div class="small-3 columns">
+
+					<fieldset>
+
+		    			<legend><i class="fi-lg fi-page-edit"></i> Print file options</legend>
+
+						<h6 class="subheader">Dimensions</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Width <input type="number" name="width" step="any" placeholder="0 mm" ng-model="data.width" required min="1" />
+								</label>
+							</div>
+							
+						</div>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Height <input type="number" name="height" step="any" placeholder="0 mm" ng-model="data.height" required min="1" />
+								</label>
+							</div>
+							
+						</div>
+
+						<h6 class="subheader">Margins</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Margins <input type="number" name="margins" step="any" placeholder="0 mm" ng-model="data.margins" min="0" required />
+								</label>
+							</div>
+							
+						</div>
+
+						<h6 class="subheader">Border</h6>
+
+						<label>
+							Border <input type="checkbox" name="border" ng-model="data.border" />
+						</label>
+
+					</fieldset>
+
+					<fieldset style="height: 354px">
+						
+		    			<legend><i class="fi-lg fi-thumbnails"></i> Nest options</legend>
+
+						<h6 class="subheader">Target width</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Target width <input type="number" name="nestwidth" step="any" placeholder="0 mm" ng-readonly="data.fileorpages != 'file'" ng-model="data.nestwidth" ng-required="data.fileorpages == 'file'" />
+								</label>
+							</div>
+							
+						</div>
+
+						<div class="row">
+
+							<div class="small-6 columns">
+
+								<h6 class="subheader">Center</h6>
+
+								<label>
+									Center <input type="checkbox" name="center" ng-readonly="data.fileorpages != 'file'" ng-model="data.center" />
+								</label>
+
+							</div>
+
+						</div>
+
+					</fieldset>
+
+				</div>
+
+				<div class="small-3 columns">
+
+					<fieldset>
+
+		    			<legend><i class="fi-lg" style="padding-right:5px;">#</i> Numbering</legend>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+
+								<div class="row collapse">
+
+									<h6 class="subheader">Numbering method</h6>
+
+									<label>
+										Copies <input type="radio" name="copiesorrange" ng-model="data.copiesorrange" value="copies" ng-change="resetRange()" /> or 
+										Range <input type="radio" name="copiesorrange" ng-model="data.copiesorrange" value="range" ng-change="resetRange()" />
+									</label>
+
+									<label>
+										Copies <input type="number" name="copies" placeholder="0" ng-readonly="data.copiesorrange == 'range'" ng-model="data.copies" ng-required="data.copiesorrange == 'copies'" min="1" />
+									</label>
+
+								</div>
+
+								<div class="row collapse">
+
+									<h6 class="subheader">Range</h6>
+
+									<div class="small-12 columns">
+										<label>
+											Max number of copies <input type="number" name="maxcopies" placeholder="0" ng-readonly="data.copiesorrange == 'copies'" ng-model="data.maxcopies" ng-required="data.copiesorrange == 'range'" min="1" />
+										</label>
+									</div>
+
+									<div class="small-5 columns">
+										<label>
+											From <input type="number" name="from" placeholder="0" ng-readonly="data.copiesorrange == 'copies'" ng-model="data.from" ng-required="data.copiesorrange == 'range'" min="0" />
+										</label>
+									</div>
+
+									<div class="small-5 columns">
+										<label>
+											To <input type="number" name="to" placeholder="0" ng-readonly="data.copiesorrange == 'copies'" ng-model="data.to" ng-required="data.copiesorrange == 'range'" />
+										</label>
+									</div>
+
+								</div>
+
+							</div>
+							
+						</div>
+
+						<h6 class="subheader">Number position</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<h6 class="subheader">Origin</h6>
+							</div>
+
+							<div class="small-3 columns">
+								<label>
+									TL <input type="radio" name="origin" value="TL" ng-model="data.origin" />
+								</label>
+							</div>
+
+							<div class="small-3 columns">
+								<label>
+									TR <input type="radio" name="origin" value="TR" ng-model="data.origin" />
+								</label>
+							</div>
+
+							<div class="small-3 columns">
+								<label>
+									BR <input type="radio" name="origin" value="BR" ng-model="data.origin" />
+								</label>
+							</div>
+
+							<div class="small-3 columns">
+								<label>
+									BL <input type="radio" name="origin" value="BL" ng-model="data.origin" />
+								</label>
+							</div>
+							
+						</div>
+
+						<div class="row">
+
+							<div class="small-6 columns">
+								<label>
+									X <span class="centerCheck">Center <input type="checkbox" name="centerx" ng-model="data.centerx" /></span>
+									<input type="number" name="x" ng-readonly="data.centerx" step="any" placeholder="0 mm" ng-model="data.x" ng-required="!data.centerx" />
+								</label>
+							</div>
+
+							<div class="small-6 columns">
+								<label>
+									Y <span class="centerCheck">Center <input type="checkbox" name="centery" ng-model="data.centery" min="0" /></span>
+									<input type="number" name="y" ng-readonly="data.centery" step="any" placeholder="0 mm" ng-model="data.y" ng-required="!data.centery" />
+								</label>
+							</div>
+							
+						</div>
+
+						<h6 class="subheader">Font (Arial)</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Font size: <span class="centerCheck">Bold: <input type="checkbox" name="bold" ng-model="data.bold" /></span>
+									<input type="number" name="fontsize" step="any" placeholder="0 mm" ng-model="data.fontsize" required min="1" />
+								</label>
+							</div>
+							<div class="small-6 columns">
+								
+							</div>
+							
+						</div>
+
+						<h6 class="subheader">Number prefix</h6>
+
+						<div class="row">
+
+							<div class="small-12 columns">
+								<label>
+									Prefix <input type="text" name="prefix" placeholder="eg. Ser. No." ng-model="data.prefix" />
+								</label>
+							</div>
+							
+						</div>
+
+					</fieldset>
+
+				</div>
+
+				<div class="small-6 columns">
+
+					<fieldset style="height: 807px">
+						
+		    			<legend><i class="fi-lg fi-clipboard-notes"></i> Checklist</legend>
+
+						<table width="100%">
+
+							<thead>
+								<tr class="main-th">
+									<th>Option</th>
+									<th width="218px">Setting</th>
+								</tr>
+							</thead>
+
+							<thead>
+								<tr>
+									<th colspan="2"><i class="fi-page-export"></i> Output options</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr>
+									<td>
+										Selected file:
+										<i ng-if="data.fileSelected" class="fi-check succsess"></i>
+										<i ng-if="!data.fileSelected" class="fi-x error"></i>
+									</td>
+									<td>{{ data.filename }}</td>
+								</tr>
+								<tr>
+									<td>
+										Single file or pages:
+										<i ng-if="serialize.fileorpages.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.fileorpages.$invalid" class="fi-x error"></i>
+									</td>
+									<td class="capitalize">{{ data.fileorpages }}</td>
+								</tr>
+							</tbody>
+
+							<thead>
+								<tr>
+									<th colspan="2"><i class="fi-page-edit"></i> Print file options</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr>
+									<td>
+										Width:
+										<i ng-if="serialize.width.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.width.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.width">{{ data.width }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Height:
+										<i ng-if="serialize.height.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.height.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.height">{{ data.height }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Margins: 
+										<i ng-if="serialize.margins.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.margins.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.margins">{{ data.margins }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Border:
+										<i ng-if="serialize.border.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.border.$invalid" class="fi-x error"></i>
+									</td>
+									<td class="capitalize"><div ng-if="data.border">On</div></td>
+								</tr>
+							</tbody>
+
+							<thead>
+								<tr>
+									<th colspan="2"><i>#</i> Numbering options</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr>
+									<td>
+										<div ng-if="data.copiesorrange == 'copies'">
+											Number of copies:
+											<i ng-if="serialize.copies.$valid" class="fi-check succsess"></i>
+											<i ng-if="serialize.copies.$invalid" class="fi-x error"></i>
+										</div>
+										<div ng-if="data.copiesorrange == 'range'">
+											Number of copies (Range):
+											<i ng-if="serialize.maxcopies.$valid && serialize.from.$valid && serialize.to.$valid" class="fi-check succsess"></i>
+											<i ng-if="serialize.copies.$invalid" class="fi-x error"></i>
+										</div>
+									</td>
+									<td>
+										<div ng-if="data.copiesorrange == 'copies'">
+											{{ data.copies }}
+										</div>
+										<div ng-if="data.copiesorrange == 'range' && serialize.maxcopies.$valid && serialize.from.$valid && serialize.to.$valid">
+											{{ Math.abs(data.from - data.to) }}, ({{ data.from }}-{{ data.to }} of {{ data.maxcopies }})
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Number position X ({{ data.origin }}):
+										<i ng-if="serialize.x.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.x.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.x">{{ data.x }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Number position Y ({{ data.origin }}):
+										<i ng-if="serialize.y.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.y.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.y">{{ data.y }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Number prefix:
+										<i ng-if="serialize.prefix.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.prefix.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div class="truncate">{{ data.prefix }}</div></td>
+								</tr>
+								<tr>
+									<td>
+										Font:
+										<i ng-if="serialize.fontsize.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.fontsize.$invalid" class="fi-x error"></i>
+									</td>
+									<td>
+										<div ng-if="data.fontsize">Arial {{ data.fontsize }} mm
+											<span ng-if="data.bold"> (Bold)</span>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+
+							<thead>
+								<tr>
+									<th colspan="2"><i class="fi-thumbnails"></i> Nest options</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr>
+									<td>
+										Target width:
+										<i ng-if="serialize.nestwidth.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.nestwidth.$invalid" class="fi-x error"></i>
+									</td>
+									<td><div ng-if="data.nestwidth">{{ data.nestwidth }} mm</div></td>
+								</tr>
+								<tr>
+									<td>
+										Center:
+										<i ng-if="serialize.center.$valid" class="fi-check succsess"></i>
+										<i ng-if="serialize.center.$invalid" class="fi-x error"></i>
+									</td>
+									<td class="capitalize"><div ng-if="data.center">On</td>
+								</tr>
+							</tbody>
+						
+						</table>
+
+					</fieldset>
+
+				</div>
+
+			</div>
+			<!--
+			<div class="row">
+
+				<fieldset>
+
+					<legend>TEST</legend>
+
+					<h1>Valid {{ serialize.$valid }}</h1>
+					<h1>Error {{ serialize.$error.required }}</h1>
+
+					<ul>
+						<li ng-repeat="(key, val)  in data">{{ key }} - {{ val }}</li>
+					</ul>
+
+					<ul>
+						<li ng-repeat="(key, val)  in serialize">{{ key }} - {{ val.$valid }}</li>
+					</ul>
+
+				</fieldset>
+
+			</div>
+			-->
+			<hr />
+
+			<div class="row">
+
+				<div class="small-12 columns centered">
+					
+					<!-- ng-disabled="!serialize.$valid || !data.fileSelected" -->
+
+					<button ng-disabled="!serialize.$valid || !data.fileSelected">
+						<i class="fi-lg fi-page-export-pdf"></i> Generate PDF
+					</button>
+
+				</div>
+
+			</div>
+
+			<input type="hidden" name="submit" />
+
+		</form>
+
+	</div>
+
+	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript" src="js/controllers/SerializeController.js"></script>
+
+</body>
+</html>

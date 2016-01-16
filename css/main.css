@@ -1,0 +1,98 @@
+body {
+	background: url("../images/halftone.png");
+}
+
+.centered {
+	text-align: center;
+}
+
+.header {
+	font-size: 50px; padding-top: 15px;
+}
+
+fieldset legend {
+	background-color: transparent;
+}
+
+fieldset {
+	background-color: rgba(0, 0, 0, 0.01);
+}
+
+.capitalize {
+	text-transform:capitalize;
+}
+
+#wrapper {
+	background: url("../images/mark.png") repeat-y top 0 left 50%;
+}
+
+.fi-lg {
+	font-size: 40px;
+	vertical-align: middle;
+}
+
+.main-th {
+	background-image: url("../images/th.jpg");
+}
+
+button[disabled="disabled"] {
+	background-color: #CCC;
+}
+button[disabled="disabled"]:hover {
+	background-color: #CCC;
+}
+
+/* Nice! */
+.truncate {
+  width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table td, table th {
+	border: 1px solid #DDD;
+}
+
+input.ng-valid, input[type="number"].ng-valid:focus, input[type="text"].ng-valid:focus {
+	background-color: rgba(0, 255, 0, 0.1);
+}
+
+input.ng-invalid, input[type="number"].ng-invalid:focus, input[type="text"].ng-invalid:focus {
+	background-color: rgba(255, 0, 0, 0.1);
+}
+
+/* hides the spin-button for firefox */
+input[type=number] {
+    -moz-appearance:textfield;
+}
+/* hides the spin-button for chrome*/
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.centerCheck {
+	float: right; height: 16px;
+}
+
+input[readonly="readonly"] {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+input[readonly="readonly"]:focus {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+input[type="number"][readonly="readonly"].ng-valid:focus, input[type="text"][readonly="readonly"].ng-valid:focus {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.succsess {
+	color: #05AF05;
+}
+
+.error {
+	color: #DE1B23;
+}
