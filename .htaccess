@@ -9,8 +9,14 @@ php_value max_input_time 259200
 php_value session.gc_maxlifetime 1200
 </IfModule>
 
-AuthType Basic
-AuthName "restricted area"
-AuthBasicProvider file
-AuthUserFile /home/gstankov/public_html/serialize/.htpasswd
-require valid-user
+# Basic auth
+# Needs a .htpasswd file and error pages for the site to be set like...
+
+#ErrorDocument 401 /err.txt
+#ErrorDocument 403 /err.txt
+
+#AuthType Basic
+#AuthName "restricted area"
+#AuthBasicProvider file
+#AuthUserFile /path/to/file/.htpasswd
+#require valid-user
