@@ -44,11 +44,15 @@ app.controller('SerializeController', function ($scope) {
 
 		// Nestwidth
 		if ($scope.data.fileorpages == "file") {
+			
 			if ($scope.data.nestwidth < ($scope.data.width+($scope.data.margins*2))) {
 				$scope.serialize.nestwidth.$setValidity("min", false);
 			} else {
 				$scope.serialize.nestwidth.$setValidity("min", true);
 			}
+			
+		} else {
+			$scope.serialize.nestwidth.$setValidity("min", true);
 		}
 
 		// From - to range

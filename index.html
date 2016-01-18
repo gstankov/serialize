@@ -113,13 +113,13 @@
 						
 		    			<legend><i class="fi-lg fi-thumbnails"></i> Nest options</legend>
 
-						<h6 class="subheader">Target width</h6>
+						<h6 class="subheader">Sheet width</h6>
 
 						<div class="row">
 
 							<div class="small-12 columns">
 								<label>
-									Target width <input type="number" name="nestwidth" step="any" placeholder="0 mm" ng-readonly="data.fileorpages != 'file'" ng-model="data.nestwidth" ng-required="data.fileorpages == 'file'" />
+									Sheet width <input type="number" name="nestwidth" step="any" placeholder="0 mm" ng-readonly="data.fileorpages != 'file'" ng-model="data.nestwidth" ng-required="data.fileorpages == 'file'" />
 								</label>
 							</div>
 							
@@ -357,7 +357,10 @@
 										<i ng-if="serialize.border.$valid" class="fi-check succsess"></i>
 										<i ng-if="serialize.border.$invalid" class="fi-x error"></i>
 									</td>
-									<td class="capitalize"><div ng-if="data.border">On</div></td>
+									<td class="capitalize">
+										<div ng-if="data.border">On</div>
+										<div ng-if="!data.border">Off</div>
+									</td>
 								</tr>
 							</tbody>
 
@@ -392,7 +395,7 @@
 								</tr>
 								<tr>
 									<td>
-										Number position X ({{ data.origin }}):
+										Number position X ({{ data.centerx ? 'C' : data.origin }}):
 										<i ng-if="serialize.x.$valid" class="fi-check succsess"></i>
 										<i ng-if="serialize.x.$invalid" class="fi-x error"></i>
 									</td>
@@ -400,7 +403,7 @@
 								</tr>
 								<tr>
 									<td>
-										Number position Y ({{ data.origin }}):
+										Number position Y ({{ data.centery ? 'C' : data.origin }}):
 										<i ng-if="serialize.y.$valid" class="fi-check succsess"></i>
 										<i ng-if="serialize.y.$invalid" class="fi-x error"></i>
 									</td>
@@ -437,7 +440,7 @@
 							<tbody>
 								<tr>
 									<td>
-										Target width:
+										Sheet width:
 										<i ng-if="serialize.nestwidth.$valid" class="fi-check succsess"></i>
 										<i ng-if="serialize.nestwidth.$invalid" class="fi-x error"></i>
 									</td>
@@ -449,7 +452,10 @@
 										<i ng-if="serialize.center.$valid" class="fi-check succsess"></i>
 										<i ng-if="serialize.center.$invalid" class="fi-x error"></i>
 									</td>
-									<td class="capitalize"><div ng-if="data.center">On</td>
+									<td class="capitalize">
+										<div ng-if="data.center">On</div>
+										<div ng-if="!data.center">Off</div>
+									</td>
 								</tr>
 							</tbody>
 						
