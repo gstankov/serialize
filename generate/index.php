@@ -348,7 +348,7 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 							$serial = $formatted;
 
 							// Add prefix if set
-							if ($this->prefix != "") $serial = $this->prefix . " " . $formatted;
+							if ($this->prefix != "") $serial = $this->prefix . $formatted;
 
 							// Cell width (+ 2mm)
 							$cellWidth = $this->GetStringWidth($serial) + 2;
@@ -416,7 +416,7 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 							if ($this->border) $this->Rect($x, $y, $this->width, $this->height);
 
 							// Create number cell
-							$this->Cell($cellWidth, ($this->fontsize + 1), $serial, 1, 1, "C");
+							$this->Cell($cellWidth, ($this->fontsize + 1), $serial, 0, 1, "C");
 
 							// Increment X by width
 							$x = $x + ($this->width + $this->margins);
@@ -608,7 +608,7 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 						if ($this->border) $this->Rect($x, $y, $this->width, $this->height);
 
 						// Create number cell
-						$this->Cell($cellWidth, ($this->fontsize + 1), $this->serial, 1, 1, "C");
+						$this->Cell($cellWidth, ($this->fontsize + 1), $this->serial, 0, 1, "C");
 						
 					}
 
@@ -665,7 +665,7 @@ if(isset($_POST['submit']) && sizeof($error) == 0) { // If submited
 					$serial = $formatted;
 
 					// Add prefix if set
-					if ($prefix != "") $serial = $prefix . " " . $formatted;
+					if ($prefix != "") $serial = $prefix . $formatted;
 
 					// Set data
 					$pdf->setData($width, $height, $margins, $copies, $pWidth, $pHeight, $border, $x, $y, $prefix, $origin, $fontsize, $copiesorrange, $from, $centerx, $centery, $maxcopies, $bold, $serial);
